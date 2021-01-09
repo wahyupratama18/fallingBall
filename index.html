@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Fall game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="./tailwind.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/5.8.55/css/materialdesignicons.min.css">
+    <meta name="prefer-color-scheme">
+</head>
+<body class="container overflow-hidden bg-gradient-to-l from-blue-200 to-indigo-300 dark:bg-gradient-to-l dark:from-gray-500 dark:to-gray-600 px-6 pt-4 h-screen">
+    <div class="grid md:grid-cols-6 gap-4">
+        <div class="md:col-start-2 md:col-span-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 p-8">
+
+            <!-- intro -->
+            <div id="intro" class="text-center p-8">
+                <h3 class="font-bold text-xl uppercase">Falling Ball</h3>
+                <button id="start" class="mt-5 transition duration-500 ease-in-out transform hover:-translate-y-1 hover:scale-110 flex-shrink-0 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-blue-200">Start</button>
+            </div>
+            <!-- end intro -->
+            <!-- game -->
+            <div id="play" style="height: 75vh; min-height: 500px; display: none; min-width: 400px;">
+                <!-- start scoring -->
+                <div class="flex justify-between">
+                    <i class="mdi mdi-arrow-left cursor-pointer" id="back"></i>
+                    <div><i class="mdi mdi-scoreboard"></i> <span id="score" class="font-semibold">[NOT AVAILABLE]</span></div>
+                    <!-- restart -->
+                    <div><i class="mdi mdi-restart cursor-pointer" id="restart"></i></div>
+                </div><hr>
+                <!-- end scoring -->
+                <div id="game" class="m-auto border-l-2 border-r-2 overflow-hidden h-full" style="width: 400px; height: 500px;">
+                    <div id="character" class="bg-indigo-500 rounded-full relative" style="width: 20px; height:20px; top: 400px; left: 190px; z-index: 10000;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+<script src="./tailwind.config.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+
+    let character = document.getElementById("character"),
+        game = document.getElementById("game"),
+        blocks,
+        interval,
+        both = 0;
+
+    // start game
+    start = () => {
+        
+        clearInterval(blocks)
+        $('.block, .hole').remove()
+        $('#character').css({
+            top: '400px',
+            left: '190px'
+        })
+
+        let counter = 0,
+        currentBlocks = [];
+        
+        blocks = setInterval(function(){
+            let blockLast = document.getElementById("block"+(counter-1)),
+                holeLast = document.getElementById("hole"+(counter-1))
+
+            // get last top
+            if(counter>0){
+                var blockLastTop = parseInt(window.getComputedStyle(blockLast).getPropertyValue("top")),
+                    holeLastTop = parseInt(window.getComputedStyle(holeLast).getPropertyValue("top"));
+            }
+
+            if(blockLastTop<400||counter==0){
+                let block = document.createElement("div"),
+                    hole = document.createElement("div"),
+                    random = Math.floor(Math.random() * 360)
+
+                block.setAttribute("class", "bg-black relative block")
+                block.setAttribute("id", "block"+ counter)
+                block.setAttribute('style', 'width: 400px; height: 20px; top: 100px; margin-top: -20px;')
+
+                hole.setAttribute("class", "bg-white relative hole")
+                hole.setAttribute("id", "hole"+ counter)
+                hole.setAttribute('style', 'width: 40px; height: 20px; top: 100px; margin-top: -20px;')
+                
+                block.style.top = blockLastTop + 100 + "px"
+                hole.style.top = holeLastTop + 100 + "px"
+                hole.style.left = random + "px"
+
+                game.appendChild(block)
+                game.appendChild(hole)
+                
+                currentBlocks.push(counter)
+                counter++;
+
+            }
+
+            let characterTop = parseInt(window.getComputedStyle(character).getPropertyValue("top")),
+                characterLeft = parseInt(window.getComputedStyle(character).getPropertyValue("left")),
+                drop = 0;
+
+            if (characterTop <= 0){
+                alert("Permainan Berakhir. Skor anda: "+(counter-9));
+
+                clearInterval(blocks);
+                // location.reload();
+
+            }
+
+
+            for(let i = 0; i < currentBlocks.length;i++){
+
+                let current = currentBlocks[i],
+                    iblock = document.getElementById("block"+current),
+                    ihole = document.getElementById("hole"+current),
+                    iblockTop = parseFloat(window.getComputedStyle(iblock).getPropertyValue("top")),
+                    iholeLeft = parseFloat(window.getComputedStyle(ihole).getPropertyValue("left"));
+
+                iblock.style.top = iblockTop - 0.5 + "px";
+                ihole.style.top = iblockTop - 0.5 + "px";
+
+                if(iblockTop < -20){
+                    currentBlocks.shift();
+                    iblock.remove();
+                    ihole.remove();
+                }
+
+                if(iblockTop-20<characterTop && iblockTop>characterTop){
+                    drop++;
+                    if(iholeLeft<=characterLeft && iholeLeft+20>=characterLeft) drop = 0;
+                    
+                }
+            }
+            
+            if(drop==0){
+                
+                if(characterTop < 480) character.style.top = characterTop + 2 + "px";
+
+            } else character.style.top = characterTop - 0.5 + "px";
+
+        },1);
+    }
+
+    // functions
+    belok = act => {
+
+        let left = parseInt(window.getComputedStyle(character).getPropertyValue("left"));
+
+        character.style.left = (left>0 && act == 'kiri' ? left - 2 : left < 380 ? left + 2 : left) + "px"
+
+    }
+
+    belokKiri = () => belok('kiri')
+    belokKanan = () => belok('kanan')
+
+    document.addEventListener("keydown", event => {
+
+        if(both==0 && ['ArrowLeft', 'ArrowRight'].indexOf(event.key) != -1){
+            both++;
+            interval = setInterval(event.key == 'ArrowLeft' ? belokKiri : belokKanan, 1)
+        }
+
+    })
+
+    document.addEventListener("keyup", event => {
+        clearInterval(interval)
+        both=0
+    })
+
+    // start the game
+    $('#start').click(() => {
+        $('#intro').fadeOut(500, () => {
+            $('#play').fadeIn(500)
+            start()
+        })
+    })
+
+    document.getElementById('restart').addEventListener('click', event => {
+        start()
+    })
+
+    $('#back').click(() => {
+        clearInterval(blocks)
+        $('#play').fadeOut(500, () => {
+            $('#intro').fadeIn(500)
+        })
+    })
+
+</script>
+<!-- <script src="script.js"></script> -->
+</html>
